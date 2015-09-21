@@ -1,15 +1,11 @@
 package edu.telemarketer;
 
 import edu.telemarketer.http.responses.Response;
-import edu.telemarketer.services.Service;
-import edu.telemarketer.services.InService;
+import edu.telemarketer.services.ServiceRegistry;
 
-import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -22,7 +18,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
 
 
 public class Server {
@@ -125,7 +120,7 @@ public class Server {
         System.out.println("初始化中...");
         ServerSocketChannel serverChannel;
         try {
-            registerServices();
+            ServiceRegistry.registerServices();
             serverChannel = ServerSocketChannel.open();
             serverChannel.bind(new InetSocketAddress(this.ip, this.port));
             serverChannel.configureBlocking(false);
@@ -136,41 +131,6 @@ public class Server {
             System.exit(1);
         }
         System.out.println("服务器启动 http://" + ip.getHostAddress() + ":" + port + "/");
-    }
-
-    private void registerServices() throws IOException {
-        URL packageUrl = Server.class.getResource("/");
-        if (packageUrl == null) {
-            return;
-        }
-        ClassLoader classLoader = ClassLoader.getSystemClassLoader();
-        String name = this.getClass().getPackage().getName();
-        registerFromPackage(name, packageUrl.getFile() + name.replaceAll("\\.", Matcher.quoteReplacement(File.separator)), classLoader, file -> file.isDirectory() || file.getName().endsWith(".class"));
-    }
-
-    private void registerFromPackage(String packageName, String packagePath, ClassLoader classLoader, FileFilter fileFilter) {
-        File dir = new File(packagePath);
-        if (!dir.exists() || !dir.isDirectory()) {
-            return;
-        }
-        File[] dirfiles = dir.listFiles(fileFilter);
-        for (File file : dirfiles) {
-            if (file.isDirectory()) {
-                registerFromPackage(packageName + "." + file.getName(), file.getAbsolutePath(), classLoader, fileFilter);
-            } else {
-                String className = file.getName().substring(0, file.getName().length() - 6);
-                try {
-                    Class<?> aClass = classLoader.loadClass(packageName + "." + className);// class forName 会执行静态域
-                    InService annotation = aClass.getAnnotation(InService.class);
-                    if (annotation != null && Service.class.isAssignableFrom(aClass)) {
-                        Controller.register(annotation.urlPattern(), aClass.asSubclass(Service.class).newInstance());
-                        System.out.println("成功注册服务: " + annotation.urlPattern() + "  " + className);
-                    }
-                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-                    logger.log(Level.WARNING, e, () -> "注册服务出错");
-                }
-            }
-        }
     }
 
 }

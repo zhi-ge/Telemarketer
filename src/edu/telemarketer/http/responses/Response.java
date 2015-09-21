@@ -74,7 +74,7 @@ public class Response {
             finalData.put(content);
             finalData.put((byte) '\r');
             finalData.put((byte) '\n');
-            finalData.flip(); // 第一次没注意
+            finalData.flip();
         }
         return finalData;
     }

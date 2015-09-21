@@ -8,6 +8,5 @@ import edu.telemarketer.http.responses.Response;
  * Created by hason on 15/9/18.
  */
 public interface Service {
-
     Response execute(Request request);
 }
