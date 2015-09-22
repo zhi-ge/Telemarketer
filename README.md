@@ -11,9 +11,9 @@ Telemarketer 是一个简单的web服务器,同时也提供了一个简单的Web
 ##编译后的结构
 
 	-Telemarket
+		+libs
 		-edu
 			-telemarketer
-				+libs
 				+http
 				+services
 				+util
@@ -29,7 +29,7 @@ Telemarketer 是一个简单的web服务器,同时也提供了一个简单的Web
 ##启动
 cd到编译后的目录下
 
-`java edu/telemarketer/Server start [address:port]`
+`./manage.sh start [address:port]`
 
 ##编写自己的服务
 继承Service接口,并用 `@InService(urlPattern = "...")` 标注。

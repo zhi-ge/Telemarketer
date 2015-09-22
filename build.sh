@@ -6,7 +6,7 @@ if [ -z $OUTPUT_PATH ]; then
 	exit
 fi
 if [ -d $OUTPUT_PATH ];then
-	read -P "所输入的目录已存在,是否覆盖 :(y/n)" yn
+	read -p "所输入的目录已存在,是否覆盖 : (y/n) " yn
 	if [ "$yn" != "Y" ] && [ "$yn" != "y" ]; then
 		echo "build终止.."
 		exit
@@ -14,8 +14,6 @@ if [ -d $OUTPUT_PATH ];then
 		rm -rf $OUTPUT_PATH
 	fi
 fi
-
-mkdir $OUTPUT_PATH
 
 
 PROJECT_PATH=$(cd `dirname $0`; pwd)
@@ -25,8 +23,13 @@ RESOURCE_PATH=$PROJECT_PATH/resources
 
 find $SRC_PATH -name *.java > $SRC_PATH/sources.list
 
+echo "正在复制资源.."
 cp -r $RESOURCE_PATH $OUTPUT_PATH
 
+echo "正在编译工程..."
 javac -d $OUTPUT_PATH -classpath $OUTPUT_PATH/libs/*.jar @$SRC_PATH/sources.list
 
+echo "编译完成..."
 rm $SRC_PATH/sources.list
+
+chmod +x $OUTPUT_PATH/manage.sh
