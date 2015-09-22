@@ -3,8 +3,7 @@ package edu.telemarketer.http.responses;
 import edu.telemarketer.http.Status;
 
 /**
- * Be careful!
- * Created by hason on 15/9/20.
+ * 500服务器内部错误响应
  */
 public class ServerInternalResponse extends Response {
 

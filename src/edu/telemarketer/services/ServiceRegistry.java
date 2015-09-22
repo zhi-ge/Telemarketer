@@ -24,16 +24,25 @@ public class ServiceRegistry {
         services.put(pattern, service);
     }
 
-    public static Service findService(String pattern) {
+    /**
+     * 根据路径查找对应服务
+     *
+     * @param path 请求路径
+     * @return 对应服务
+     */
+    public static Service findService(String path) {
         for (Map.Entry<String, Service> entry : services.entrySet()) {
-            if (pattern.matches(entry.getKey())) {
+            if (path.matches(entry.getKey())) {
                 return entry.getValue();
             }
         }
         return null;
     }
 
-    public static void registerServices() throws IOException {
+    /**
+     * 注册服务
+     */
+    public static void registerServices() {
         URL packageUrl = Server.class.getResource("/");
         if (packageUrl == null) {
             return;

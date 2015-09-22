@@ -6,8 +6,7 @@ import edu.telemarketer.util.PropertiesHelper;
 import java.io.File;
 
 /**
- * Be careful!
- * Created by hason on 15/9/19.
+ * 404未找到响应
  */
 public class NotFoundResponse extends FileResponse {
 

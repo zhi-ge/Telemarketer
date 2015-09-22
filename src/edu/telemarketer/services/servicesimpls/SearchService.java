@@ -8,10 +8,7 @@ import edu.telemarketer.services.Service;
 import edu.telemarketer.services.InService;
 import edu.telemarketer.util.PropertiesHelper;
 
-/**
- * Be careful!
- * Created by hason on 15/9/19.
- */
+
 
 @InService(urlPattern = "^/$")
 public class SearchService implements Service {

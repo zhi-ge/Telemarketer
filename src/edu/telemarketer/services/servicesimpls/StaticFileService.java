@@ -12,8 +12,7 @@ import edu.telemarketer.util.PropertiesHelper;
 import java.io.File;
 
 /**
- * Be careful!
- * Created by hason on 15/9/17.
+ * 静态文件服务
  */
 @InService(urlPattern = "^" + StaticFileService.prefix + ".*$")
 public class StaticFileService implements Service {

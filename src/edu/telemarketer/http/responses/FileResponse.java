@@ -10,8 +10,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 
 /**
- * Be careful!
- * Created by hason on 15/9/20.
+ * 文件响应
  */
 public class FileResponse extends Response {
 

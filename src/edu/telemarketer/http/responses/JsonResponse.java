@@ -7,8 +7,7 @@ import org.json.JSONObject;
 import java.io.UnsupportedEncodingException;
 
 /**
- * Be careful!
- * Created by hason on 15/9/20.
+ * Json响应
  */
 public class JsonResponse extends Response {
     public JsonResponse(Status status, JSONObject json) {

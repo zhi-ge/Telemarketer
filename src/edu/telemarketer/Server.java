@@ -2,6 +2,7 @@ package edu.telemarketer;
 
 import edu.telemarketer.http.responses.Response;
 import edu.telemarketer.services.ServiceRegistry;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -19,9 +20,12 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
+/**
+ * 服务器类
+ * 负责等候和处理IO事件
+ */
 public class Server {
-    public static final int TIMEOUT = 500;
+    public static final int TIMEOUT = 500;  // selector超时时间
     public static final int READ_CAPACITY = 4096;
     public static final int DEFAULT_PORT = 8080;
     private Logger logger = Logger.getLogger("Server");

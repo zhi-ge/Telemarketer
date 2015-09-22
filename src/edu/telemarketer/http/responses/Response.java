@@ -11,8 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Be careful!
- * Created by hason on 15/9/18.
+ * Http响应
  */
 public class Response {
 

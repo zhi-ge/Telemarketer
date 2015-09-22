@@ -19,8 +19,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Be careful!
- * Created by hason on 15/9/18.
+ * 控制器
  */
 public class Controller implements Runnable {
 
