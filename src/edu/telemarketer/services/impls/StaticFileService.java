@@ -1,4 +1,4 @@
-package edu.telemarketer.services.servicesimpls;
+package edu.telemarketer.services.impls;
 
 import edu.telemarketer.http.Status;
 import edu.telemarketer.http.requests.Request;

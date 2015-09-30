@@ -1,4 +1,4 @@
-package edu.telemarketer.http.requests.mime;
+package edu.telemarketer.http.requests;
 
 /**
  * Be careful!

@@ -38,6 +38,9 @@ public class Connector implements Runnable {
         Response response;
         try {
             request = Request.parseRequest(channel);
+            if (request == null) {
+                return;
+            }
             Service service = ServiceRegistry.findService(request.getURI());
             if (service == null) {
                 response = new NotFoundResponse();
@@ -67,6 +70,7 @@ public class Connector implements Runnable {
     private void attachResponse(Response response) {
         try {
             channel.register(selector, SelectionKey.OP_WRITE, response);
+            selector.wakeup();
         } catch (ClosedChannelException e) {
             logger.log(Level.WARNING, e, () -> "通道已关闭");
         }

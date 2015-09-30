@@ -22,9 +22,16 @@ class RequestHeader {
     private Map<String, String> head;
     private Map<String, String> queryMap;
 
-    public static RequestHeader parseHeader(byte[] head) throws IOException {
+    public RequestHeader() {
+        URI = "";
+        method = "";
+        head = Collections.emptyMap();
+        queryMap = Collections.emptyMap();
+    }
+
+    public void parseHeader(byte[] head) throws IOException {
         try (BufferedReader reader = new BufferedReader(new StringReader(new String(head, "UTF-8")))) {
-            HashMap<String, String> headMap = new HashMap<>();
+            Map<String, String> headMap = new HashMap<>();
             String path;
             String method;
             try {
@@ -44,11 +51,14 @@ class RequestHeader {
             int index = path.indexOf('?');
             if (index != -1) {
                 queryMap = new HashMap<>();
-                RequestBody.parseParameters(path.substring(index + 1), queryMap);
+                Request.parseParameters(path.substring(index + 1), queryMap);
                 path = path.substring(0, index);
             }
 
-            return new RequestHeader(path, method, headMap, queryMap);
+            this.URI = path;
+            this.method = method;
+            this.head = headMap;
+            this.queryMap = queryMap;
         }
 
     }
@@ -59,13 +69,6 @@ class RequestHeader {
 
     public String getMethod() {
         return method;
-    }
-
-    public RequestHeader(String uri, String method, Map<String, String> head, Map<String, String> queryMap) {
-        this.URI = uri;
-        this.method = method;
-        this.head = head;
-        this.queryMap = queryMap;
     }
 
     public boolean containKey(String key) {

@@ -3,6 +3,7 @@ package edu.telemarketer;
 import edu.telemarketer.http.responses.Response;
 import edu.telemarketer.services.ServiceRegistry;
 
+import javax.xml.crypto.KeySelector;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -24,7 +25,6 @@ import java.util.logging.Logger;
  * 负责等候和处理IO事件
  */
 public class Server {
-    public static final int TIMEOUT = 500;  // selector超时时间
     public static final int DEFAULT_PORT = 8080;
     private Logger logger = Logger.getLogger("Server");
     private InetAddress ip;
@@ -67,7 +67,7 @@ public class Server {
         init();
         while (true) {
             try {
-                if (selector.select(TIMEOUT) == 0) {
+                if (selector.select() == 0) {
                     continue;
                 }
             } catch (IOException e) {
@@ -100,10 +100,10 @@ public class Server {
                     } else if (key.isReadable()) {
                         SocketChannel client = (SocketChannel) key.channel();
                         executor.execute(new Connector(client, selector));
-                        key.interestOps(0);// 使对一切不感兴趣 本来写的是cancel 以为是取消对读的感兴趣，
+                        key.interestOps(key.interestOps() & ~SelectionKey.OP_READ);// 取消对读取事件的兴趣 本来写的是cancel 以为是取消对读的感兴趣，
                         // 结果导致register 写事件的时候非常慢,等待了几秒。 不知道为什么
                     }
-                } catch (Throwable e) {
+                } catch (Exception e) {
                     logger.log(Level.SEVERE, e, () -> "socket channel 出错了");
                     key.cancel();
                     try {

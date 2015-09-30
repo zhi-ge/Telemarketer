@@ -1,4 +1,4 @@
-package edu.telemarketer.services.servicesimpls;
+package edu.telemarketer.services.impls;
 
 import edu.telemarketer.http.requests.Request;
 import edu.telemarketer.http.responses.FileResponse;
@@ -10,7 +10,7 @@ import edu.telemarketer.util.PropertiesHelper;
 
 
 @InService(urlPattern = "^/$")
-public class SearchService implements Service {
+public class IndexService implements Service {
     @Override
     public Response service(Request request) {
 

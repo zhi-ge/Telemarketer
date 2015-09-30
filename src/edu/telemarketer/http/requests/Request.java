@@ -1,7 +1,7 @@
 package edu.telemarketer.http.requests;
 
 import edu.telemarketer.http.exceptions.IllegalRequestException;
-import edu.telemarketer.http.requests.mime.MIMEData;
+import edu.telemarketer.util.BytesUtil;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -30,20 +30,18 @@ public class Request {
         channel.read(buffer); //IOException
         buffer.flip();
         int remaining = buffer.remaining();
+        if (remaining == 0) {
+            return null;
+        }
         byte[] bytes = new byte[remaining];
         buffer.get(bytes);
-        int position = 0;
-        for (int i = 0; i < remaining; i++) {
-            if (bytes[i] == '\r' && bytes[i + 1] == '\n') {
-                position = i;
-                i += 2;
-            }
-            if (i + 1 < remaining && bytes[i] == '\r' && bytes[i + 1] == '\n') {
-                break;
-            }
+        int position = BytesUtil.indexOf(bytes, "\r\n\r\n");
+        if (position == -1) {
+            throw new IllegalRequestException("请求不合法");
         }
         byte[] head = Arrays.copyOf(bytes, position);
-        RequestHeader requestHeader = RequestHeader.parseHeader(head); //IOException
+        RequestHeader requestHeader = new RequestHeader();
+        requestHeader.parseHeader(head); //IOException
         int contentLength = requestHeader.getContentLength();
         buffer.position(position + 4);
         ByteBuffer bodyBuffer = ByteBuffer.allocate(contentLength);
@@ -54,17 +52,26 @@ public class Request {
         byte[] body = bodyBuffer.array();
         RequestBody requestBody = new RequestBody();
         if (body.length != 0) {
-            RequestBody.parseBody(body, requestHeader);
+            requestBody.parseBody(body, requestHeader);
         }
         return new Request(requestHeader, requestBody);
     }
 
-    public boolean containKey(String key) {
-        return header.containKey(key);
+    static void parseParameters(String s, Map<String, String> requestParameters) {
+        String[] paras = s.split("&");
+        for (String para : paras) {
+            String[] split = para.split("=");
+            requestParameters.put(split[0], split[1]);
+        }
     }
+
 
     public Map<String, String> getQueryMap() {
         return header.getQueryMap();
+    }
+
+    public boolean queryContainKey(String key) {
+        return header.containKey(key);
     }
 
     public String queryValue(String key) {

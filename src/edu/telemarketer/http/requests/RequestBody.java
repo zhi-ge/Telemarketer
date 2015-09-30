@@ -1,8 +1,9 @@
 package edu.telemarketer.http.requests;
 
-import edu.telemarketer.http.requests.mime.MIMEData;
+import edu.telemarketer.util.BytesUtil;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,17 +21,12 @@ class RequestBody {
     private Map<String, MIMEData> mimeMap;
 
 
-    public RequestBody(Map<String, String> formMap, Map<String, MIMEData> mimeMap) {
-        this.formMap = formMap;
-        this.mimeMap = mimeMap;
-    }
-
     public RequestBody() {
         this.formMap = Collections.emptyMap();
         this.mimeMap = Collections.emptyMap();
     }
 
-    public static RequestBody parseBody(byte[] body, RequestHeader header) {
+    public void parseBody(byte[] body, RequestHeader header) {
 
         String contentType = header.getContentType();
 
@@ -41,7 +37,7 @@ class RequestBody {
         if (contentType.contains("application/x-www-form-urlencoded")) {
             try {
                 String bodyMsg = new String(body, "utf-8");
-                parseParameters(bodyMsg, formMap);
+                Request.parseParameters(bodyMsg, formMap);
             } catch (UnsupportedEncodingException e) {
                 logger.log(Level.SEVERE, "基本不可能出现的错误 编码方法不支持");
                 throw new RuntimeException(e);
@@ -51,15 +47,8 @@ class RequestBody {
             String bouStr = contentType.substring(boundaryValueIndex + 9); // 9是 `boundary=` 长度
             mimeMap = parseFormData(body, bouStr);
         }
-        return new RequestBody(formMap, mimeMap);
-    }
-
-    public static void parseParameters(String s, Map<String, String> requestParameters) {
-        String[] paras = s.split("&");
-        for (String para : paras) {
-            String[] split = para.split("=");
-            requestParameters.put(split[0], split[1]);
-        }
+        this.formMap = formMap;
+        this.mimeMap = mimeMap;
     }
 
     /**
@@ -69,13 +58,12 @@ class RequestBody {
      */
     private static Map<String, MIMEData> parseFormData(byte[] body, String bouStr) {
         Map<String, MIMEData> mimeData = new HashMap<>();
-
         int bouLength = bouStr.length();
-        String tmpBody = new String(body);
-        int lastIndex = tmpBody.lastIndexOf(bouStr);
+
+        int lastIndex = BytesUtil.lastIndexOf(body, bouStr);
         int startIndex;
-        int endIndex = tmpBody.indexOf(bouStr);
-        String curBody;
+        int endIndex = BytesUtil.indexOf(body, bouStr);
+        byte[] curBody;
 
         do {
             //  ------WebKitFormBoundaryIwVsTjLkjugAgonI
@@ -91,29 +79,30 @@ class RequestBody {
             //  请求就是这样,所以会用魔数比较快。response 的话会有别的disposition。
             //  然而这里默认了 name在前 filename在后,不知道会不会不符合规定,若是不能默认那还是用正则吧
             startIndex = endIndex + bouLength;
-            endIndex = tmpBody.indexOf(bouStr, startIndex + bouLength);
-            curBody = tmpBody.substring(startIndex + 2, endIndex); //去掉\r\n
-            int lineEndIndex = curBody.indexOf("\r\n");
-            String lineOne = curBody.substring(0, lineEndIndex);
-            int leftQuoIndex = lineOne.indexOf('"');
-            int rightQuoIndex = lineOne.indexOf('"', leftQuoIndex + 1);
+            endIndex = BytesUtil.indexOf(body, bouStr, startIndex + bouLength);
+
+            curBody = Arrays.copyOfRange(body, startIndex + 2, endIndex); //去掉\r\n
+            int lineEndIndex = BytesUtil.indexOf(curBody, "\r\n");
+            byte[] lineOne = Arrays.copyOfRange(curBody, 0, lineEndIndex);
+            int leftQuoIndex = BytesUtil.indexOf(lineOne, "\"");
+            int rightQuoIndex = BytesUtil.indexOf(lineOne, "\"", leftQuoIndex + 1);
             String name;
             String fileName = null;
             String mimeType = null;
             byte[] data;
-            name = lineOne.substring(leftQuoIndex + 1, rightQuoIndex);
-            leftQuoIndex = lineOne.indexOf('"', rightQuoIndex + 1);
+            name = new String(Arrays.copyOfRange(lineOne, leftQuoIndex + 1, rightQuoIndex));
+            leftQuoIndex = BytesUtil.indexOf(lineOne, "\"", rightQuoIndex + 1);
             int curIndex;
             if (leftQuoIndex != -1) {
-                rightQuoIndex = lineOne.indexOf('"', leftQuoIndex + 1);
-                fileName = lineOne.substring(leftQuoIndex + 1, rightQuoIndex);
-                int headEndIndex = curBody.indexOf("\r\n\r\n", 13);
-                mimeType = curBody.substring(lineEndIndex + 13, headEndIndex);
+                rightQuoIndex = BytesUtil.indexOf(lineOne, "\"", leftQuoIndex + 1);
+                fileName = new String(Arrays.copyOfRange(lineOne, leftQuoIndex + 1, rightQuoIndex));
+                int headEndIndex = BytesUtil.indexOf(curBody, "\r\n\r\n", 13);
+                mimeType = new String(Arrays.copyOfRange(curBody, lineEndIndex + 16, headEndIndex));
                 curIndex = headEndIndex + 4;
             } else {
                 curIndex = lineEndIndex + 2;
             }
-            data = curBody.substring(curIndex, curBody.length()).getBytes();
+            data = Arrays.copyOfRange(curBody, curIndex, curBody.length);
             mimeData.put(name, new MIMEData(mimeType, data, fileName));
         } while (endIndex != lastIndex);
         return mimeData;
@@ -124,9 +113,8 @@ class RequestBody {
     }
 
     public boolean mimeContainKey(String key) {
-        return formMap.containsKey(key);
+        return mimeMap.containsKey(key);
     }
-
 
     public Map<String, String> getFormMap() {
         return Collections.unmodifiableMap(formMap);
