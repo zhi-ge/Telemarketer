@@ -25,8 +25,8 @@ public class StaticFileService implements Service {
     }
 
     @Override
-    public Response execute(Request request) {
-        String filePath = staticPath + File.separator + request.getFilePath().replaceAll(prefix, "");
+    public Response service(Request request) {
+        String filePath = staticPath + File.separator + request.getURI().replaceAll(prefix, "");
         File file = new File(filePath);
         if (!file.exists() || !file.isFile() || !file.canRead()) {
             return new NotFoundResponse();

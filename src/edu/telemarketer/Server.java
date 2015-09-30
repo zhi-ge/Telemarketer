@@ -2,7 +2,6 @@ package edu.telemarketer;
 
 import edu.telemarketer.http.responses.Response;
 import edu.telemarketer.services.ServiceRegistry;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -26,7 +25,6 @@ import java.util.logging.Logger;
  */
 public class Server {
     public static final int TIMEOUT = 500;  // selector超时时间
-    public static final int READ_CAPACITY = 4096;
     public static final int DEFAULT_PORT = 8080;
     private Logger logger = Logger.getLogger("Server");
     private InetAddress ip;
@@ -80,6 +78,7 @@ public class Server {
             Iterator<SelectionKey> iterator = readyKeys.iterator();
             while (iterator.hasNext()) {
                 SelectionKey key = iterator.next();
+
                 try {
                     iterator.remove();
                     if (key.isAcceptable()) {
@@ -90,25 +89,21 @@ public class Server {
                     } else if (key.isWritable()) {
                         SocketChannel client = (SocketChannel) key.channel();
                         Response response = (Response) key.attachment();
-                        if (response == null) {
-                            continue;
-                        }
                         ByteBuffer byteBuffer = response.getByteBuffer();
                         if (byteBuffer.hasRemaining()) {
                             client.write(byteBuffer);
                         }
-
                         if (!byteBuffer.hasRemaining()) {
                             key.cancel();
                             client.close();
                         }
                     } else if (key.isReadable()) {
                         SocketChannel client = (SocketChannel) key.channel();
-                        ByteBuffer buffer = ByteBuffer.allocate(READ_CAPACITY);
-                        client.read(buffer);
-                        executor.execute(new Controller(buffer, client, selector));
+                        executor.execute(new Connector(client, selector));
+                        key.interestOps(0);// 使对一切不感兴趣 本来写的是cancel 以为是取消对读的感兴趣，
+                        // 结果导致register 写事件的时候非常慢,等待了几秒。 不知道为什么
                     }
-                } catch (IOException e) {
+                } catch (Throwable e) {
                     logger.log(Level.SEVERE, e, () -> "socket channel 出错了");
                     key.cancel();
                     try {

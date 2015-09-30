@@ -9,14 +9,11 @@ import edu.telemarketer.services.InService;
 import edu.telemarketer.util.PropertiesHelper;
 
 
-
 @InService(urlPattern = "^/$")
 public class SearchService implements Service {
     @Override
-    public Response execute(Request request) {
-        if (!request.containParameter("word")) {
-            return new FileResponse(Status.SUCCESS_200, PropertiesHelper.getTemplateFile("index.html"));
-        }
-        return new FileResponse(Status.SUCCESS_200, PropertiesHelper.getTemplateFile("search.html"));
+    public Response service(Request request) {
+
+        return new FileResponse(Status.SUCCESS_200, PropertiesHelper.getTemplateFile("index.html"));
     }
 }

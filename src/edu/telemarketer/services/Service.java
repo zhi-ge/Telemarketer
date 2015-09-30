@@ -7,5 +7,5 @@ import edu.telemarketer.http.responses.Response;
  * 服务接口
  */
 public interface Service {
-    Response execute(Request request);
+    Response service(Request request);
 }

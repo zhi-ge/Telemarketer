@@ -1,6 +1,5 @@
 package edu.telemarketer;
 
-import edu.telemarketer.http.Status;
 import edu.telemarketer.http.exceptions.IllegalRequestException;
 import edu.telemarketer.http.exceptions.ServerInternalException;
 import edu.telemarketer.http.responses.NotFoundResponse;
@@ -10,7 +9,7 @@ import edu.telemarketer.http.responses.ServerInternalResponse;
 import edu.telemarketer.services.ServiceRegistry;
 import edu.telemarketer.services.Service;
 
-import java.nio.ByteBuffer;
+import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -21,56 +20,53 @@ import java.util.logging.Logger;
 /**
  * 控制器
  */
-public class Controller implements Runnable {
+public class Connector implements Runnable {
 
-    private static Logger logger = Logger.getLogger("Controller");
-    private final ByteBuffer buffer;
+    private static Logger logger = Logger.getLogger("Connector");
     private final SocketChannel channel;
     private final Selector selector;
 
 
-    public Controller(ByteBuffer buffer, SocketChannel client, Selector selector) {
-        this.buffer = buffer;
+    public Connector(SocketChannel client, Selector selector) {
         this.channel = client;
         this.selector = selector;
     }
 
     @Override
     public void run() {
-        Request request;
-        try {
-            request = Request.parseFromBuffer(buffer);
-        } catch (IllegalRequestException e) {
-            logger.log(Level.WARNING, e, () -> "请求有错误");
-            attachResponse(new Response(Status.BAD_REQUEST_400));
-            return;
-        }
-        Service service = ServiceRegistry.findService(request.getFilePath());
-
+        Request request = null;
         Response response;
-        if (service == null) {
-            response = new NotFoundResponse();
-        } else {
-            try {
-                response = service.execute(request);
+        try {
+            request = Request.parseRequest(channel);
+            Service service = ServiceRegistry.findService(request.getURI());
+            if (service == null) {
+                response = new NotFoundResponse();
+            } else {
+                response = service.service(request);
                 if (response == null) {
                     throw new ServerInternalException("service返回了一个null");
                 }
-            } catch (ServerInternalException e) {
-                logger.log(Level.SEVERE, e, () -> "服务器内部错误");
-                attachResponse(new ServerInternalResponse());
-                return;
             }
+
+        } catch (ServerInternalException | IOException e) { // 这个IOException都是parseRequest里出来的
+            logger.log(Level.SEVERE, e, () -> "服务器内部错误");
+            System.exit(1);
+            response = new ServerInternalResponse();
+        } catch (IllegalRequestException e) {
+            logger.log(Level.WARNING, e, () -> "请求有错误");
+            response = new ServerInternalResponse();
         }
         attachResponse(response);
-        logger.info(request.getMethod() + " \"" + request.getFilePath() + "\" " + response.getStatus().getCode());
+
+        assert request != null;
+        logger.info(request.getMethod() + " \"" + request.getURI() + "\" " + response.getStatus().getCode());
+
 
     }
 
     private void attachResponse(Response response) {
         try {
-            SelectionKey key = channel.register(selector, SelectionKey.OP_WRITE);
-            key.attach(response);
+            channel.register(selector, SelectionKey.OP_WRITE, response);
         } catch (ClosedChannelException e) {
             logger.log(Level.WARNING, e, () -> "通道已关闭");
         }
