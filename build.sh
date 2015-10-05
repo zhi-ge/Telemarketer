@@ -17,7 +17,6 @@ fi
 
 
 PROJECT_PATH=$(cd `dirname $0`; pwd)
-JAR_PATH=${PROJECT_PATH}/libs
 SRC_PATH=${PROJECT_PATH}/src
 RESOURCE_PATH=${PROJECT_PATH}/resources
 
@@ -26,8 +25,15 @@ find ${SRC_PATH} -name *.java > ${SRC_PATH}/sources.list
 echo "正在复制资源.."
 cp -r ${RESOURCE_PATH} ${OUTPUT_PATH}
 
+CLASSPATH=.
+for filename in `ls ${OUTPUT_PATH}/libs/`
+    do
+        CLASSPATH=${CLASSPATH}:${OUTPUT_PATH}/libs/${filename}
+    done
+export CLASSPATH
+
 echo "正在编译工程..."
-javac -d ${OUTPUT_PATH} -classpath ${OUTPUT_PATH}/libs/*.jar @${SRC_PATH}/sources.list
+javac -d ${OUTPUT_PATH} @${SRC_PATH}/sources.list
 
 echo "编译完成..."
 rm ${SRC_PATH}/sources.list
